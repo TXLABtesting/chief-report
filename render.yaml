@@ -1,0 +1,18 @@
+# Render Blueprint — deploys the app as a Docker web service.
+# The database is Neon (external); set DATABASE_URL in the Render dashboard.
+# Docs: https://render.com/docs/blueprint-spec
+services:
+  - type: web
+    name: chief-report
+    runtime: docker
+    plan: free
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /api/health
+    autoDeploy: true
+    envVars:
+      - key: NODE_ENV
+        value: production
+      # Paste your Neon connection string here in the Render dashboard
+      # (Environment → Add). Keep it secret — do not commit it.
+      - key: DATABASE_URL
+        sync: false

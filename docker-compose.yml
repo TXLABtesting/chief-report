@@ -1,0 +1,35 @@
+# Local development stack: Postgres (Neon substitute) + the app container.
+# Usage:  docker compose up --build
+# Then open http://localhost:3001  (the app migrates + seeds on start).
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: chief
+      POSTGRES_PASSWORD: chief
+      POSTGRES_DB: chief_report
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U chief -d chief_report"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  app:
+    build: .
+    environment:
+      DATABASE_URL: postgres://chief:chief@db:5432/chief_report
+      PORT: 3001
+    ports:
+      - "3001:3001"
+    depends_on:
+      db:
+        condition: service_healthy
+    # Migrate + seed, then start. (Reseeds on every restart — local only.)
+    command: sh -c "node scripts/migrate.js && node scripts/seed.js && node src/index.js"
+
+volumes:
+  pgdata:
