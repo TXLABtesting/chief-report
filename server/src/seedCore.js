@@ -1,8 +1,13 @@
 'use strict';
 
 // Shared schema + seed logic, used by both the CLI scripts and the server's
-// startup bootstrap. Seeding is idempotent (ON CONFLICT), so it is safe to run
-// repeatedly; only `reset: true` (the CLI `db:seed`) clears existing rows.
+// startup bootstrap.
+//
+// Two kinds of data are treated differently:
+//   • "definitions" (statuses, sections) are code-managed — upserted on every
+//     boot so titles/labels always match the code.
+//   • "projects" are content — seeded only when the table is empty, so edits
+//     made through the API are preserved across deploys.
 
 const fs = require('fs');
 const path = require('path');
@@ -20,11 +25,9 @@ async function isEmpty(db) {
   return rows[0].n === 0;
 }
 
-async function seed(db, { reset = false } = {}) {
-  if (reset) {
-    await db.query('TRUNCATE projects, sections, statuses RESTART IDENTITY CASCADE');
-  }
-
+// Upsert statuses + sections (DO UPDATE) — keeps titles/labels in sync with the
+// code on every deploy. Safe to run repeatedly.
+async function syncDefinitions(db) {
   for (const s of statuses) {
     await db.query(
       `INSERT INTO statuses (key, label, position) VALUES ($1, $2, $3)
@@ -32,7 +35,6 @@ async function seed(db, { reset = false } = {}) {
       [s.key, s.label, s.position]
     );
   }
-
   for (const s of sections) {
     await db.query(
       `INSERT INTO sections (id, position, icon, title, sub) VALUES ($1, $2, $3, $4, $5)
@@ -42,7 +44,12 @@ async function seed(db, { reset = false } = {}) {
       [s.id, s.position, s.icon, s.title, s.sub]
     );
   }
+}
 
+// Insert project rows. With reset, replaces them; otherwise existing rows are
+// left untouched (preserves edits made through the API).
+async function seedProjects(db, { reset = false } = {}) {
+  if (reset) await db.query('TRUNCATE projects RESTART IDENTITY');
   let pos = 0;
   for (const p of projects) {
     const cols = ['id', 'position'];
@@ -56,7 +63,6 @@ async function seed(db, { reset = false } = {}) {
       }
     }
     const ph = vals.map((_, i) => `$${i + 1}`);
-    // DO NOTHING preserves any edits made through the API on existing rows.
     await db.query(
       `INSERT INTO projects (${cols.join(', ')}) VALUES (${ph.join(', ')}) ON CONFLICT (id) DO NOTHING`,
       vals
@@ -64,6 +70,13 @@ async function seed(db, { reset = false } = {}) {
   }
 }
 
+// Full seed (CLI `db:seed`). reset clears everything first.
+async function seed(db, { reset = false } = {}) {
+  if (reset) await db.query('TRUNCATE projects, sections, statuses RESTART IDENTITY CASCADE');
+  await syncDefinitions(db);
+  await seedProjects(db, { reset: false });
+}
+
 const counts = { statuses: statuses.length, sections: sections.length, projects: projects.length };
 
-module.exports = { ensureSchema, isEmpty, seed, counts };
+module.exports = { ensureSchema, isEmpty, syncDefinitions, seedProjects, seed, counts };

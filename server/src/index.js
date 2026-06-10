@@ -46,20 +46,23 @@ app.use((err, _req, res, _next) => {
 // empty, so a fresh Neon database never serves a blank page. Idempotent and
 // non-destructive (existing rows are preserved). Disable with AUTO_MIGRATE=false.
 const db = require('./db');
-const { ensureSchema, isEmpty, seed, counts } = require('./seedCore');
+const { ensureSchema, isEmpty, syncDefinitions, seedProjects, counts } = require('./seedCore');
 
 async function bootstrap() {
   if (process.env.AUTO_MIGRATE === 'false') return;
   try {
     await ensureSchema(db.pool);
+    // Always sync section/status definitions so title/label edits in the code
+    // reach the live database on deploy.
+    await syncDefinitions(db.pool);
     if (await isEmpty(db.pool)) {
-      await seed(db.pool, { reset: false });
-      console.log(`[bootstrap] empty database — seeded ${counts.sections} sections / ${counts.projects} projects`);
+      await seedProjects(db.pool, { reset: false });
+      console.log(`[bootstrap] empty database — synced definitions, seeded ${counts.projects} projects`);
     } else {
-      console.log('[bootstrap] schema ensured; data already present');
+      console.log('[bootstrap] definitions synced; project data already present');
     }
   } catch (err) {
-    console.error('[bootstrap] seed skipped (database slow/unreachable):', err.message);
+    console.error('[bootstrap] sync/seed skipped (database slow/unreachable):', err.message);
   }
 }
 
