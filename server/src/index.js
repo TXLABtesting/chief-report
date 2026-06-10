@@ -41,5 +41,29 @@ app.use((err, _req, res, _next) => {
   res.status(500).json({ error: 'Internal server error' });
 });
 
+// ── Startup bootstrap ────────────────────────────────────────────────────
+// Ensure the schema exists and seed the report the first time the database is
+// empty, so a fresh Neon database never serves a blank page. Idempotent and
+// non-destructive (existing rows are preserved). Disable with AUTO_MIGRATE=false.
+const db = require('./db');
+const { ensureSchema, isEmpty, seed, counts } = require('./seedCore');
+
+async function bootstrap() {
+  if (process.env.AUTO_MIGRATE === 'false') return;
+  try {
+    await ensureSchema(db.pool);
+    if (await isEmpty(db.pool)) {
+      await seed(db.pool, { reset: false });
+      console.log(`[bootstrap] empty database — seeded ${counts.sections} sections / ${counts.projects} projects`);
+    } else {
+      console.log('[bootstrap] schema ensured; data already present');
+    }
+  } catch (err) {
+    console.error('[bootstrap] skipped (database not reachable yet):', err.message);
+  }
+}
+
 const PORT = process.env.PORT || 3001;
-app.listen(PORT, () => console.log(`[chief-report] API listening on :${PORT}`));
+bootstrap().finally(() => {
+  app.listen(PORT, () => console.log(`[chief-report] API listening on :${PORT}`));
+});
