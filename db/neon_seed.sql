@@ -54,7 +54,7 @@ INSERT INTO statuses (key,label,position) VALUES ('review','سيتم العرض'
 INSERT INTO statuses (key,label,position) VALUES ('inputs','بانتظار مدخلات',5) ON CONFLICT (key) DO NOTHING;
 
 INSERT INTO sections (id,position,icon,title,sub) VALUES ('strategic',1,'target','المشاريع الاستراتيجية','التحول إلى الذكاء الاصطناعي ونظم الأداء') ON CONFLICT (id) DO NOTHING;
-INSERT INTO sections (id,position,icon,title,sub) VALUES ('mocasmart',2,'squares-four','أتمتة الخدمات — MOCAsmart','خدمات ذاتية للموظفين') ON CONFLICT (id) DO NOTHING;
+INSERT INTO sections (id,position,icon,title,sub) VALUES ('mocasmart',2,'squares-four','MOCAsmart','خدمات ذاتية للموظفين') ON CONFLICT (id) DO NOTHING;
 INSERT INTO sections (id,position,icon,title,sub) VALUES ('ops',3,'gear-six','الأنظمة التشغيلية','الخدمات المركزية') ON CONFLICT (id) DO NOTHING;
 INSERT INTO sections (id,position,icon,title,sub) VALUES ('culture',4,'confetti','البيئة المؤسسية','مبادرات شهر يونيو 2026') ON CONFLICT (id) DO NOTHING;
 INSERT INTO sections (id,position,icon,title,sub) VALUES ('crm',5,'chart-bar','علاقات المتعاملين','استبيانات وتسجيل الموردين') ON CONFLICT (id) DO NOTHING;

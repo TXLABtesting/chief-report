@@ -13,7 +13,7 @@ const statuses = [
 
 const sections = [
   { id: 'strategic', position: 1, icon: 'target', title: 'المشاريع الاستراتيجية', sub: 'التحول إلى الذكاء الاصطناعي ونظم الأداء' },
-  { id: 'mocasmart', position: 2, icon: 'squares-four', title: 'أتمتة الخدمات — MOCAsmart', sub: 'خدمات ذاتية للموظفين' },
+  { id: 'mocasmart', position: 2, icon: 'squares-four', title: 'MOCAsmart', sub: 'خدمات ذاتية للموظفين' },
   { id: 'ops', position: 3, icon: 'gear-six', title: 'الأنظمة التشغيلية', sub: 'الخدمات المركزية' },
   { id: 'culture', position: 4, icon: 'confetti', title: 'البيئة المؤسسية', sub: 'مبادرات شهر يونيو 2026' },
   { id: 'crm', position: 5, icon: 'chart-bar', title: 'علاقات المتعاملين', sub: 'استبيانات وتسجيل الموردين' },
