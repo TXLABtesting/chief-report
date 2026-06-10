@@ -59,11 +59,15 @@ async function bootstrap() {
       console.log('[bootstrap] schema ensured; data already present');
     }
   } catch (err) {
-    console.error('[bootstrap] skipped (database not reachable yet):', err.message);
+    console.error('[bootstrap] seed skipped (database slow/unreachable):', err.message);
   }
 }
 
+// Start listening immediately so the server is healthy even if the database is
+// slow to wake (free Neon suspends when idle). Seeding runs in the background
+// afterwards — it must never block startup or the Render health check.
 const PORT = process.env.PORT || 3001;
-bootstrap().finally(() => {
-  app.listen(PORT, () => console.log(`[chief-report] API listening on :${PORT}`));
+app.listen(PORT, () => {
+  console.log(`[chief-report] API listening on :${PORT}`);
+  bootstrap();
 });

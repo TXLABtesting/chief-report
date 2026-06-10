@@ -21,6 +21,9 @@ const isLocal = /@(localhost|127\.0\.0\.1|db)[:/]/.test(connectionString || '');
 const pool = new Pool({
   connectionString,
   ssl: connectionString && !isLocal ? { rejectUnauthorized: false } : false,
+  // Don't let a sleeping/slow database (free Neon suspends when idle) hang a
+  // connection forever — fail fast so requests error cleanly instead.
+  connectionTimeoutMillis: 15000,
 });
 
 pool.on('error', (err) => {
