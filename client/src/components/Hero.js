@@ -1,4 +1,4 @@
-export default function Hero() {
+export default function Hero({ reportLabel }) {
   return (
     <header className="hero">
       <div className="hero-top">
@@ -11,9 +11,11 @@ export default function Hero() {
       <div className="kicker"><span className="ln" /> تحديث أسبوعي</div>
       <h1>ملخص مشاريع وعمليات مركز التجربة المتكاملة</h1>
       <p className="sub">أبرز المشاريع والمبادرات والعمليات القائمة ضمن الفريق — في لمحة سريعة.</p>
-      <span className="date-pill">
-        <i className="ph-bold ph-calendar-check" /> الجمعة 5 يونيو 2026
-      </span>
+      {reportLabel && (
+        <span className="date-pill">
+          <i className="ph-bold ph-calendar-check" /> {reportLabel}
+        </span>
+      )}
     </header>
   );
 }

@@ -16,10 +16,7 @@ async function request(path, options) {
 }
 
 export const api = {
+  // Returns { statuses, sections, reports:[{ id, label, dateIso, isLatest,
+  //          topPriorities, summary, projects }] } newest report first.
   getReport: () => request('/report'),
-  // Full CRUD is available too, e.g.:
-  //   api.createProject(body) / api.updateProject(id, body) / api.deleteProject(id)
-  createProject: (body) => request('/projects', { method: 'POST', body: JSON.stringify(body) }),
-  updateProject: (id, body) => request(`/projects/${id}`, { method: 'PUT', body: JSON.stringify(body) }),
-  deleteProject: (id) => request(`/projects/${id}`, { method: 'DELETE' }),
 };

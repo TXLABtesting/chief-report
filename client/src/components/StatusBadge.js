@@ -1,17 +1,19 @@
 const CLASS = {
   done: 'st-done',
   progress: 'st-progress',
+  ready: 'st-ready',
   approval: 'st-approval',
-  review: 'st-review',
   inputs: 'st-inputs',
+  delayed: 'st-delayed',
 };
 
 const LABEL = {
   done: 'مكتمل',
   progress: 'قيد التنفيذ',
+  ready: 'جاهز للعرض',
   approval: 'بانتظار اعتماد',
-  review: 'سيتم العرض',
   inputs: 'بانتظار مدخلات',
+  delayed: 'متأخّر عن الجدول',
 };
 
 export default function StatusBadge({ status }) {

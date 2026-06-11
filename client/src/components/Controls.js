@@ -1,9 +1,10 @@
 const DOTS = {
   done: 'var(--done-dot)',
   progress: 'var(--prog-dot)',
+  ready: 'var(--revw-dot)',
   approval: 'var(--appr-dot)',
-  review: 'var(--revw-dot)',
   inputs: 'var(--inpt-dot)',
+  delayed: 'var(--late-dot)',
 };
 
 export default function Controls({ query, onQuery, status, onStatus, statuses }) {

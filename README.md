@@ -94,36 +94,55 @@ npm run dev                   # API :3001  +  client dev server :3000
 
 ---
 
-## واجهة برمجة التطبيقات / API
+## إضافة تقرير أسبوعي / Add a weekly report
 
-Base path `/api`. Full CRUD over the report content.
+محتوى التقارير كله في ملف واحد: **`server/src/reportsData.js`** (مصدر الحقيقة).
+لإضافة أسبوع جديد:
+
+1. افتح `server/src/reportsData.js`.
+2. انسخ كائن تقرير موجوداً، وضَع النسخة **في أعلى مصفوفة `REPORTS`** (الأحدث أولاً).
+3. عدّل `id` و`label` و`dateIso`، ثم حدّث `projects` و`topPriorities`.
+4. انشر (push) — يظهر الأسبوع الجديد تلقائياً في الفلتر ويصبح الافتراضي.
+
+```js
+const REPORT_2026_06_19 = {
+  id: '2026-06-19', label: 'الجمعة 19 يونيو 2026', dateIso: '2026-06-19',
+  topPriorities: ['…', '…', '…'],
+  projects: [
+    { id: 'tms', section: 'strategic', status: 'progress',
+      title: '…', update: '…', next: '…',
+      challenges: '…', launch: '…', launchSoon: true,
+      needsAttention: true /* requiresApproval, documentUrl, teamGroups, services, stats … */ },
+  ],
+};
+const REPORTS = [REPORT_2026_06_19, REPORT_2026_06_12, REPORT_2026_06_05];
+```
+
+**الحالات المتاحة:** `done` مكتمل · `progress` قيد التنفيذ · `ready` جاهز للعرض ·
+`approval` بانتظار اعتماد · `inputs` بانتظار مدخلات · `delayed` متأخّر عن الجدول.
+ضع `needsAttention: true` لإبراز أي بند يحتاج قراراً أو متابعة من رئيس القطاع.
+
+> المحتوى يُخدَم من ملف البيانات مباشرةً عبر `/api/report` — لا حاجة لأي تحديث على قاعدة
+> البيانات. قاعدة Neon اختيارية، والموقع يعمل حتى لو تعذّر الاتصال بها.
+
+---
+
+## واجهة برمجة التطبيقات / API
 
 | Method | Path | Purpose |
 |-------|------|---------|
 | GET | `/api/health` | liveness probe |
-| GET | `/api/report` | sections with nested projects (what the client renders) |
-| GET | `/api/statuses` | status vocabulary (filter chips) |
-| GET · POST | `/api/sections` · `/api/sections/:id` | list / create |
-| PUT · DELETE | `/api/sections/:id` | update / delete (cascades to projects) |
-| GET | `/api/projects?section=&status=` | list / filter |
-| POST | `/api/projects` | create |
-| GET · PUT · DELETE | `/api/projects/:id` | read / update / delete |
+| GET | `/api/report` | كل التقارير الأسبوعية + الأقسام والحالات (ما تعرضه الواجهة) |
 
-Example — update a project’s status:
-```bash
-curl -X PUT https://<your-app>.onrender.com/api/projects/tms \
-  -H 'Content-Type: application/json' \
-  -d '{"status":"done"}'
-```
+`/api/report` يعيد `{ statuses, sections, reports: [{ id, label, dateIso, isLatest, topPriorities, summary, projects }] }` مرتّبة من الأحدث.
 
 ---
 
 ## الميزات / Features
 
-- **بحث وفلترة** بالحالة (مكتمل · قيد التنفيذ · بانتظار اعتماد · سيتم العرض · بانتظار مدخلات).
-- **تحميل المستند** — يظهر فقط للمشاريع التي لها مستند مرفق (`documentUrl`)، ويفتح/ينزّل الملف.
-- **زر الاعتماد** — يظهر فقط عند `requiresApproval`، ويفتح مسودة بريد في Outlook عبر `mailto` بقالب جاهز (لا يُرسل تلقائياً).
-- **Accordion** للتفاصيل الطويلة (حالة الفرق، قائمة الخدمات، إحصاءات التسجيل).
-- **Mobile-first / RTL** بالكامل، خطوط Noto Kufi Arabic و Alexandria، أيقونات Phosphor.
-
-كل المحتوى محفوظ في قاعدة البيانات ويمكن تعديله عبر واجهة الـ API الكاملة (CRUD).
+- **فلتر أسبوعي** — اختيار تاريخ التقرير يحدّث الصفحة بالكامل لذلك الأسبوع.
+- **ملخص تنفيذي** أعلى الصفحة: عدد المشاريع (قيد التنفيذ / مكتمل / متأخّر)، أهم 3 أولويات، وبنود تتطلّب قراراً أو متابعة.
+- **حالات وألوان واضحة** لكل مشروع (Badges)، مع إبراز البنود التي تحتاج تدخّل رئيس القطاع.
+- **بحث وفلترة** بالحالة، و**التحديات** و**الخطوة القادمة** و**موعد الإطلاق المتوقّع** لكل بند.
+- **تحميل المستند** و**زر الاعتماد** (مسودة Outlook عبر `mailto`).
+- **Accordion** للتفاصيل الطويلة، و**استجابة كاملة** للهاتف واللابتوب والشاشات الكبيرة، **RTL** بالكامل.

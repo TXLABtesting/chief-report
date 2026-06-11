@@ -1,38 +1,38 @@
 'use strict';
 
 const express = require('express');
-const db = require('../db');
-const { mapProject, mapSection } = require('../mappers');
+const { STATUSES, SECTIONS, REPORTS } = require('../reportsData');
 
 const router = express.Router();
 
-// GET /api/report — the whole report, sections with nested projects,
-// ordered the same way the original report was. This is what the client
-// renders on load.
-router.get('/', async (_req, res, next) => {
-  try {
-    const [statuses, sections, projects] = await Promise.all([
-      db.query('SELECT key, label FROM statuses ORDER BY position'),
-      db.query('SELECT * FROM sections ORDER BY position'),
-      db.query('SELECT * FROM projects ORDER BY position, created_at'),
-    ]);
+// Executive summary computed from a report's projects.
+function summarize(projects) {
+  const count = (fn) => projects.filter(fn).length;
+  const attention = projects
+    .filter((p) => p.needsAttention || p.status === 'approval' || p.status === 'delayed')
+    .map((p) => ({ id: p.id, title: p.title, status: p.status, section: p.section }));
+  return {
+    inProgress: count((p) => p.status === 'progress'),
+    completed: count((p) => p.status === 'done'),
+    delayed: count((p) => p.status === 'delayed'),
+    ready: count((p) => p.status === 'ready'),
+    attention,
+  };
+}
 
-    const bySection = new Map();
-    for (const row of projects.rows) {
-      if (!bySection.has(row.section_id)) bySection.set(row.section_id, []);
-      bySection.get(row.section_id).push(mapProject(row));
-    }
-
-    res.json({
-      statuses: statuses.rows,
-      sections: sections.rows.map((s) => ({
-        ...mapSection(s),
-        projects: bySection.get(s.id) || [],
-      })),
-    });
-  } catch (err) {
-    next(err);
-  }
+// GET /api/report — all weekly reports (newest first) + global sections/statuses.
+// The client renders the selected week and switches instantly via the filter.
+router.get('/', (_req, res) => {
+  const reports = REPORTS.map((r, i) => ({
+    id: r.id,
+    label: r.label,
+    dateIso: r.dateIso,
+    isLatest: i === 0,
+    topPriorities: r.topPriorities || [],
+    summary: summarize(r.projects),
+    projects: r.projects,
+  }));
+  res.json({ statuses: STATUSES, sections: SECTIONS, reports });
 });
 
 module.exports = router;

@@ -33,14 +33,17 @@ function TeamGroups({ groups }) {
 export default function ProjectCard({ p }) {
   const [open, setOpen] = useState(false);
   const hasDetails = Boolean(p.detailText || p.teamGroups || p.services);
+  const flagged = Boolean(p.needsAttention || p.priority);
 
   return (
-    <article className={`card${p.priority ? ' prio' : ''}`}>
+    <article className={`card${flagged ? ' prio' : ''}`}>
       <div className="card-top">
         <div>
           <h3>{p.title}</h3>
-          {p.priority && (
-            <span className="prio-flag"><i className="ph-fill ph-flag" /> يحتاج متابعة</span>
+          {flagged && (
+            <span className="prio-flag">
+              <i className="ph-fill ph-flag" /> {p.needsAttention ? 'يتطلّب متابعة رئيس القطاع' : 'أولوية'}
+            </span>
           )}
         </div>
         <StatusBadge status={p.status} />
@@ -66,6 +69,13 @@ export default function ProjectCard({ p }) {
               <div className="mc"><dt>الخطوة القادمة</dt><dd>{p.next}</dd></div>
             </div>
           )}
+        </div>
+      )}
+
+      {p.challenges && (
+        <div className="challenge">
+          <div className="cic"><i className="ph-fill ph-warning" /></div>
+          <div className="mc"><dt>التحديات</dt><dd>{p.challenges}</dd></div>
         </div>
       )}
 
