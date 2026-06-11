@@ -2,6 +2,7 @@
 
 const path = require('path');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
+const CopyWebpackPlugin = require('copy-webpack-plugin');
 
 // API origin used during local dev (the Express server). The dev server
 // proxies /api and /docs to it so the client can use same-origin paths.
@@ -26,6 +27,13 @@ module.exports = (_env, argv) => {
     resolve: { extensions: ['.js', '.jsx'] },
     plugins: [
       new HtmlWebpackPlugin({ template: './public/index.html' }),
+      // Copy static assets (icons, manifest, favicon) into the build; the
+      // HTML template is handled by HtmlWebpackPlugin above.
+      new CopyWebpackPlugin({
+        patterns: [
+          { from: 'public', to: '.', globOptions: { ignore: ['**/index.html'] } },
+        ],
+      }),
     ],
     devServer: {
       port: 3000,
