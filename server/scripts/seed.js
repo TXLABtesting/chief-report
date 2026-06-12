@@ -2,12 +2,12 @@
 
 require('dotenv').config();
 const { pool } = require('../src/db');
-const { ensureSchema, seed, counts } = require('../src/seedCore');
+const { ensureSchema, sync, counts } = require('../src/seedCore');
 
 async function main() {
-  await ensureSchema(pool);              // safe if migrate already ran
-  await seed(pool, { reset: true });     // CLI seed replaces existing rows
-  console.log(`[seed] ${counts.statuses} statuses, ${counts.sections} sections, ${counts.projects} projects.`);
+  await ensureSchema(pool);
+  await sync(pool, { reset: true });
+  console.log(`[seed] ${counts.reports} reports, ${counts.sections} sections, ${counts.statuses} statuses, ${counts.projects} projects.`);
   await pool.end();
 }
 

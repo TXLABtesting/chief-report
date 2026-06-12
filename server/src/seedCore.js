@@ -1,82 +1,94 @@
 'use strict';
 
-// Shared schema + seed logic, used by both the CLI scripts and the server's
-// startup bootstrap.
-//
-// Two kinds of data are treated differently:
-//   • "definitions" (statuses, sections) are code-managed — upserted on every
-//     boot so titles/labels always match the code.
-//   • "projects" are content — seeded only when the table is empty, so edits
-//     made through the API are preserved across deploys.
-
 const fs = require('fs');
 const path = require('path');
-const { statuses, sections, projects } = require('../scripts/seedData');
-const { PROJECT_WRITABLE, JSON_COLUMNS } = require('./mappers');
+const { STATUSES, SECTIONS, REPORTS } = require('./reportsData');
+const { PROJECT_COLUMNS, JSON_COLUMNS } = require('./reportShape');
 
 const schemaSQL = fs.readFileSync(path.join(__dirname, '..', '..', 'db', 'schema.sql'), 'utf8');
 
+// Ensure the schema exists. If the legacy (pre-weekly-reports) tables are
+// present without the new `reports` table, drop them first so the new schema
+// can be created cleanly — a one-time automatic migration.
 async function ensureSchema(db) {
+  const { rows } = await db.query("SELECT to_regclass('public.reports') AS r");
+  if (!rows[0].r) {
+    await db.query('DROP TABLE IF EXISTS projects CASCADE');
+    await db.query('DROP TABLE IF EXISTS sections CASCADE');
+    await db.query('DROP TABLE IF EXISTS statuses CASCADE');
+  }
   await db.query(schemaSQL);
 }
 
 async function isEmpty(db) {
-  const { rows } = await db.query('SELECT count(*)::int AS n FROM projects');
+  const { rows } = await db.query('SELECT count(*)::int AS n FROM reports');
   return rows[0].n === 0;
 }
 
-// Upsert statuses + sections (DO UPDATE) — keeps titles/labels in sync with the
-// code on every deploy. Safe to run repeatedly.
-async function syncDefinitions(db) {
-  for (const s of statuses) {
+// Upsert the whole dataset (reports + sections + statuses + projects) from the
+// data file into the database. Idempotent; `reset` clears everything first.
+async function sync(db, { reset = false } = {}) {
+  if (reset) await db.query('TRUNCATE projects, reports, sections, statuses RESTART IDENTITY CASCADE');
+
+  for (const s of STATUSES) {
     await db.query(
       `INSERT INTO statuses (key, label, position) VALUES ($1, $2, $3)
        ON CONFLICT (key) DO UPDATE SET label = EXCLUDED.label, position = EXCLUDED.position`,
-      [s.key, s.label, s.position]
+      [s.key, s.label, STATUSES.indexOf(s) + 1]
     );
   }
-  for (const s of sections) {
+
+  for (let i = 0; i < SECTIONS.length; i++) {
+    const s = SECTIONS[i];
     await db.query(
       `INSERT INTO sections (id, position, icon, title, sub) VALUES ($1, $2, $3, $4, $5)
-       ON CONFLICT (id) DO UPDATE
-         SET position = EXCLUDED.position, icon = EXCLUDED.icon,
-             title = EXCLUDED.title, sub = EXCLUDED.sub`,
-      [s.id, s.position, s.icon, s.title, s.sub]
+       ON CONFLICT (id) DO UPDATE SET position = EXCLUDED.position, icon = EXCLUDED.icon,
+         title = EXCLUDED.title, sub = EXCLUDED.sub`,
+      [s.id, i + 1, s.icon, s.title, s.sub]
     );
   }
-}
 
-// Insert project rows. With reset, replaces them; otherwise existing rows are
-// left untouched (preserves edits made through the API).
-async function seedProjects(db, { reset = false } = {}) {
-  if (reset) await db.query('TRUNCATE projects RESTART IDENTITY');
-  let pos = 0;
-  for (const p of projects) {
-    const cols = ['id', 'position'];
-    const vals = [p.id, pos++];
-    for (const [apiKey, column] of Object.entries(PROJECT_WRITABLE)) {
-      if (column === 'position') continue;
-      if (Object.prototype.hasOwnProperty.call(p, apiKey)) {
-        cols.push(column);
-        const v = p[apiKey];
-        vals.push(JSON_COLUMNS.has(column) && v != null ? JSON.stringify(v) : v);
-      }
-    }
-    const ph = vals.map((_, i) => `$${i + 1}`);
+  // Keep the database holding exactly the reports defined in the data file.
+  const ids = REPORTS.map((r) => r.id);
+  await db.query(
+    `DELETE FROM reports WHERE NOT (id = ANY($1::text[]))`,
+    [ids.length ? ids : ['__none__']]
+  );
+
+  for (let i = 0; i < REPORTS.length; i++) {
+    const r = REPORTS[i];
     await db.query(
-      `INSERT INTO projects (${cols.join(', ')}) VALUES (${ph.join(', ')}) ON CONFLICT (id) DO NOTHING`,
-      vals
+      `INSERT INTO reports (id, label, date_iso, position, top_priorities)
+       VALUES ($1, $2, $3, $4, $5::jsonb)
+       ON CONFLICT (id) DO UPDATE SET label = EXCLUDED.label, date_iso = EXCLUDED.date_iso,
+         position = EXCLUDED.position, top_priorities = EXCLUDED.top_priorities`,
+      [r.id, r.label, r.dateIso, REPORTS.length - i, JSON.stringify(r.topPriorities || [])]
     );
+
+    // Replace this report's projects so removed items don't linger.
+    await db.query('DELETE FROM projects WHERE report_id = $1', [r.id]);
+    let pos = 0;
+    for (const p of r.projects) {
+      const cols = ['report_id', 'id', 'position'];
+      const vals = [r.id, p.id, pos++];
+      for (const [apiKey, column] of Object.entries(PROJECT_COLUMNS)) {
+        if (Object.prototype.hasOwnProperty.call(p, apiKey)) {
+          cols.push(column);
+          const v = p[apiKey];
+          vals.push(JSON_COLUMNS.has(column) && v != null ? JSON.stringify(v) : v);
+        }
+      }
+      const ph = vals.map((_, j) => `$${j + 1}`);
+      await db.query(`INSERT INTO projects (${cols.join(', ')}) VALUES (${ph.join(', ')})`, vals);
+    }
   }
 }
 
-// Full seed (CLI `db:seed`). reset clears everything first.
-async function seed(db, { reset = false } = {}) {
-  if (reset) await db.query('TRUNCATE projects, sections, statuses RESTART IDENTITY CASCADE');
-  await syncDefinitions(db);
-  await seedProjects(db, { reset: false });
-}
+const counts = {
+  statuses: STATUSES.length,
+  sections: SECTIONS.length,
+  reports: REPORTS.length,
+  projects: REPORTS.reduce((a, r) => a + r.projects.length, 0),
+};
 
-const counts = { statuses: statuses.length, sections: sections.length, projects: projects.length };
-
-module.exports = { ensureSchema, isEmpty, syncDefinitions, seedProjects, seed, counts };
+module.exports = { ensureSchema, isEmpty, sync, counts };

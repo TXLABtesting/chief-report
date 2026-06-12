@@ -14,9 +14,6 @@ app.use(express.json({ limit: '1mb' }));
 // ── API ──────────────────────────────────────────────────────────────────
 app.get('/api/health', (_req, res) => res.json({ ok: true, service: 'chief-report' }));
 app.use('/api/report', require('./routes/report'));
-app.use('/api/sections', require('./routes/sections'));
-app.use('/api/projects', require('./routes/projects'));
-app.use('/api/statuses', require('./routes/statuses'));
 
 // Uploaded supporting documents (PDFs, etc.)
 app.use('/docs', express.static(path.join(__dirname, '..', '..', 'docs')));
@@ -42,33 +39,26 @@ app.use((err, _req, res, _next) => {
 });
 
 // ── Startup bootstrap ────────────────────────────────────────────────────
-// Ensure the schema exists and seed the report the first time the database is
-// empty, so a fresh Neon database never serves a blank page. Idempotent and
-// non-destructive (existing rows are preserved). Disable with AUTO_MIGRATE=false.
+// Ensure the schema exists and sync the data file into the database so the
+// content lives in Neon (ready for IT to migrate to internal DBs). Runs in the
+// background so a slow/idle database never blocks startup or the health check.
+// Set AUTO_SYNC=false to stop overwriting the DB from code (e.g. once IT owns it).
 const db = require('./db');
-const { ensureSchema, isEmpty, syncDefinitions, seedProjects, counts } = require('./seedCore');
+const { ensureSchema, sync, counts } = require('./seedCore');
 
 async function bootstrap() {
-  if (process.env.AUTO_MIGRATE === 'false') return;
+  if (process.env.AUTO_SYNC === 'false') return;
   try {
     await ensureSchema(db.pool);
-    // Always sync section/status definitions so title/label edits in the code
-    // reach the live database on deploy.
-    await syncDefinitions(db.pool);
-    if (await isEmpty(db.pool)) {
-      await seedProjects(db.pool, { reset: false });
-      console.log(`[bootstrap] empty database — synced definitions, seeded ${counts.projects} projects`);
-    } else {
-      console.log('[bootstrap] definitions synced; project data already present');
-    }
+    await sync(db.pool, { reset: false });
+    console.log(`[bootstrap] synced to database — ${counts.reports} reports, ${counts.projects} projects`);
   } catch (err) {
-    console.error('[bootstrap] sync/seed skipped (database slow/unreachable):', err.message);
+    console.error('[bootstrap] DB sync skipped (database slow/unreachable):', err.message);
   }
 }
 
 // Start listening immediately so the server is healthy even if the database is
-// slow to wake (free Neon suspends when idle). Seeding runs in the background
-// afterwards — it must never block startup or the Render health check.
+// slow to wake (free Neon suspends when idle).
 const PORT = process.env.PORT || 3001;
 app.listen(PORT, () => {
   console.log(`[chief-report] API listening on :${PORT}`);

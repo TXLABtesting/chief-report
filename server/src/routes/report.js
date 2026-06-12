@@ -1,38 +1,27 @@
 'use strict';
 
 const express = require('express');
-const { STATUSES, SECTIONS, REPORTS } = require('../reportsData');
+const db = require('../db');
+const { readDbResponse, buildFileResponse } = require('../reportShape');
 
 const router = express.Router();
 
-// Executive summary computed from a report's projects.
-function summarize(projects) {
-  const count = (fn) => projects.filter(fn).length;
-  const attention = projects
-    .filter((p) => p.needsAttention || p.status === 'approval' || p.status === 'delayed')
-    .map((p) => ({ id: p.id, title: p.title, status: p.status, section: p.section }));
-  return {
-    inProgress: count((p) => p.status === 'progress'),
-    completed: count((p) => p.status === 'done'),
-    delayed: count((p) => p.status === 'delayed'),
-    ready: count((p) => p.status === 'ready'),
-    attention,
-  };
-}
-
-// GET /api/report — all weekly reports (newest first) + global sections/statuses.
-// The client renders the selected week and switches instantly via the filter.
-router.get('/', (_req, res) => {
-  const reports = REPORTS.map((r, i) => ({
-    id: r.id,
-    label: r.label,
-    dateIso: r.dateIso,
-    isLatest: i === 0,
-    topPriorities: r.topPriorities || [],
-    summary: summarize(r.projects),
-    projects: r.projects,
-  }));
-  res.json({ statuses: STATUSES, sections: SECTIONS, reports });
+// GET /api/report — read all weekly reports from the database. Falls back to
+// the bundled data file if the database is unreachable or not yet seeded, so
+// the site never serves an empty page during a cold start.
+router.get('/', async (_req, res) => {
+  try {
+    const data = await readDbResponse(db);
+    if (data.reports.length > 0) {
+      res.set('X-Report-Source', 'database');
+      return res.json(data);
+    }
+    console.warn('[report] database has no reports — serving data file');
+  } catch (err) {
+    console.error('[report] database read failed, serving data file:', err.message);
+  }
+  res.set('X-Report-Source', 'file');
+  res.json(buildFileResponse());
 });
 
 module.exports = router;

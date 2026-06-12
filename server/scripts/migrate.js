@@ -1,14 +1,12 @@
 'use strict';
 
 require('dotenv').config();
-const fs = require('fs');
-const path = require('path');
 const { pool } = require('../src/db');
+const { ensureSchema } = require('../src/seedCore');
 
 async function main() {
-  const schema = fs.readFileSync(path.join(__dirname, '..', '..', 'db', 'schema.sql'), 'utf8');
-  console.log('[migrate] applying db/schema.sql …');
-  await pool.query(schema);
+  console.log('[migrate] ensuring schema …');
+  await ensureSchema(pool);
   console.log('[migrate] done.');
   await pool.end();
 }
