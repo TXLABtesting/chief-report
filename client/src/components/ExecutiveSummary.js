@@ -4,7 +4,9 @@ export default function ExecutiveSummary({ report, sections }) {
   return (
     <section className="section exec">
       <div className="sum-grid">
-        {sections.map((sec) => {
+        {sections
+          .filter((sec) => projects.some((p) => p.section === sec.id))
+          .map((sec) => {
           const inSec = projects.filter((p) => p.section === sec.id);
           const count = inSec.length;
           const att = inSec.filter((p) => p.needsAttention).length;

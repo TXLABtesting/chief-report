@@ -1,10 +1,10 @@
 import ProjectCard from './ProjectCard';
 
-export default function ReportSection({ section, projects }) {
+export default function ReportSection({ section, projects, n }) {
   return (
     <section className="rep-sec" id={`sec-${section.id}`}>
       <div className="sec-head">
-        <div className="sec-num">{section.n}</div>
+        <div className="sec-num">{n}</div>
         <div className="t">
           <h2>{section.title}</h2>
           <p>{section.sub}</p>

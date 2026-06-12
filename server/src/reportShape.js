@@ -85,9 +85,7 @@ async function readDbResponse(db) {
 
   return {
     statuses: statuses.rows,
-    sections: sections.rows.map((s) => ({
-      id: s.id, n: String(s.position).padStart(2, '0'), icon: s.icon, title: s.title, sub: s.sub,
-    })),
+    sections: sections.rows.map((s) => ({ id: s.id, icon: s.icon, title: s.title, sub: s.sub })),
     reports: reports.rows.map((r, i) => {
       const ps = byReport.get(r.id) || [];
       return {

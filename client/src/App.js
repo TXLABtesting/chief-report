@@ -69,8 +69,13 @@ export default function App() {
             <ExecutiveSummary report={active} sections={sections} />
             <Controls query={query} onQuery={setQuery} status={status} onStatus={setStatus} statuses={statuses} />
             <div id="report">
-              {grouped.map(({ section, projects }) => (
-                <ReportSection key={section.id} section={section} projects={projects} />
+              {grouped.map(({ section, projects }, i) => (
+                <ReportSection
+                  key={section.id}
+                  section={section}
+                  projects={projects}
+                  n={String(i + 1).padStart(2, '0')}
+                />
               ))}
               {grouped.length === 0 && (
                 <div className="empty">
