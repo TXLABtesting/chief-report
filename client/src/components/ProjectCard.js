@@ -50,12 +50,20 @@ export default function ProjectCard({ p }) {
       </div>
 
       {p.stats ? (
-        <div className="stat-grid">
-          {p.stats.map((s, i) => (
-            <div className={`stat${s.amber ? ' amber' : ''}`} key={i}>
-              <b>{s.n}</b><span>{s.l}</span>
+        <div className="reg">
+          <div className="reg-box">
+            <div className="rb-top"><b>{p.stats.newRequests.n}</b><span className="rl">{p.stats.newRequests.l}</span></div>
+          </div>
+          <div className="reg-box">
+            <div className="rb-top"><b>{p.stats.inProcess.n}</b><span className="rl">{p.stats.inProcess.l}</span></div>
+            <div className="reg-break">
+              {p.stats.breakdown.map((b, i) => (
+                <div className={`reg-item${b.amber ? ' amber' : ''}`} key={i}>
+                  <span className="rn">{b.n}</span><span className="rt">{b.l}</span>
+                </div>
+              ))}
             </div>
-          ))}
+          </div>
         </div>
       ) : (
         <div className="meta">

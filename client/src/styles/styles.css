@@ -185,6 +185,19 @@ h1,h2,h3,h4{font-family:var(--font-head);line-height:1.3;font-weight:800}
 .stat span{font-size:10.5px;color:var(--ink-3);line-height:1.3;display:block;margin-top:3px}
 .stat.amber{background:var(--appr-bg)} .stat.amber b{color:var(--appr-fg)}
 
+/* ===== SUPPLIER REGISTRATION (full-width boxes + breakdown) ===== */
+.reg{display:flex;flex-direction:column;gap:10px}
+.reg-box{width:100%;background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:13px 14px}
+.reg-box .rb-top{display:flex;align-items:baseline;gap:10px}
+.reg-box .rb-top b{font-family:var(--font-head);font-size:24px;font-weight:800;color:var(--plum-700);line-height:1}
+.reg-box .rb-top .rl{font-size:12.5px;color:var(--ink-2);font-weight:600}
+.reg-break{margin-top:12px;border-top:1px solid var(--line);padding-top:11px;display:flex;flex-direction:column;gap:7px}
+.reg-item{display:flex;align-items:center;gap:10px;font-size:12.5px}
+.reg-item .rn{flex:0 0 auto;width:26px;height:26px;border-radius:8px;background:var(--surface);
+  border:1px solid var(--line);display:grid;place-items:center;font-family:var(--font-head);font-weight:800;font-size:13px;color:var(--plum-700)}
+.reg-item .rt{color:var(--ink-2);line-height:1.4}
+.reg-item.amber .rn{background:var(--appr-bg);border-color:transparent;color:var(--appr-fg)}
+
 .empty{text-align:center;padding:46px 20px;color:var(--ink-3)}
 .empty i{font-size:38px;color:var(--line-2);display:block;margin-bottom:12px}
 
