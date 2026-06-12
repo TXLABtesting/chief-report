@@ -206,9 +206,9 @@ const REPORT_2026_06_12 = {
     {
       id: 'employee-survey', section: 'crm', status: 'progress',
       title: 'استبيان رضا الموظفين',
-      update: 'نسبة المشاركة الحالية: 69%، وعدد المشاركين: 105.',
-      next: 'تم تمديد فترة الاستبيان حتى 13 يونيو 2026.',
-      progress: 69,
+      update: 'نسبة المشاركة الحالية: 76%، وعدد المشاركين: 105.',
+      next: 'تم تمديد فترة الاستبيان اليوم حتى 21 يونيو 2026.',
+      progress: 76, target: 80,
     },
     {
       id: 'supplier-reg', section: 'crm', status: 'progress', needsAttention: true,

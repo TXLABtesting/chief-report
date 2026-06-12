@@ -37,6 +37,7 @@ CREATE TABLE IF NOT EXISTS projects (
   launch             TEXT,
   launch_soon        BOOLEAN NOT NULL DEFAULT FALSE,
   progress           INT,
+  target             INT,
   priority           BOOLEAN NOT NULL DEFAULT FALSE,
   needs_attention    BOOLEAN NOT NULL DEFAULT FALSE,
   detail_text        TEXT,

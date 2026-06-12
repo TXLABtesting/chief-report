@@ -6,7 +6,7 @@ const { STATUSES, SECTIONS, REPORTS } = require('./reportsData');
 const PROJECT_COLUMNS = {
   section: 'section_id', status: 'status', title: 'title', update: 'update_text',
   next: 'next_step', challenges: 'challenges', launch: 'launch', launchSoon: 'launch_soon',
-  progress: 'progress', priority: 'priority', needsAttention: 'needs_attention',
+  progress: 'progress', target: 'target', priority: 'priority', needsAttention: 'needs_attention',
   detailText: 'detail_text', documentName: 'document_name', documentUrl: 'document_url',
   requiresApproval: 'requires_approval', approvalEmailTo: 'approval_email_to',
   approvalSubject: 'approval_subject', approvalBody: 'approval_body',
@@ -25,6 +25,7 @@ function mapProjectRow(row) {
   if (row.challenges) out.challenges = row.challenges;
   if (row.launch) out.launch = row.launch;
   if (row.progress != null) out.progress = row.progress;
+  if (row.target != null) out.target = row.target;
   if (row.requires_approval) out.requiresApproval = true;
   if (row.detail_text) out.detailText = row.detail_text;
   if (row.document_name) out.documentName = row.document_name;

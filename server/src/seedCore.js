@@ -18,6 +18,8 @@ async function ensureSchema(db) {
     await db.query('DROP TABLE IF EXISTS statuses CASCADE');
   }
   await db.query(schemaSQL);
+  // Lightweight column migrations for already-existing databases.
+  try { await db.query('ALTER TABLE projects ADD COLUMN IF NOT EXISTS target INT'); } catch (_) { /* older engines */ }
 }
 
 async function isEmpty(db) {

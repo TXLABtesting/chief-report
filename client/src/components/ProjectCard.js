@@ -89,8 +89,19 @@ export default function ProjectCard({ p }) {
 
       {typeof p.progress === 'number' && (
         <div className="pbar-wrap">
-          <div className="pbar-lbl"><span>نسبة الاستجابة</span><b>{p.progress}%</b></div>
-          <div className="pbar"><i style={{ width: `${p.progress}%` }} /></div>
+          <div className="pbar-lbl">
+            <span>نسبة الاستجابة</span>
+            <span className="pbar-vals">
+              <b>{p.progress}%</b>
+              {typeof p.target === 'number' && <span className="pbar-target">الهدف {p.target}%</span>}
+            </span>
+          </div>
+          <div className="pbar">
+            <i style={{ width: `${p.progress}%` }} />
+            {typeof p.target === 'number' && (
+              <span className="pbar-mark" style={{ insetInlineStart: `${p.target}%` }} />
+            )}
+          </div>
         </div>
       )}
 
