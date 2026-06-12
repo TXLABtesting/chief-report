@@ -98,9 +98,9 @@ const REPORT_2026_06_12 = {
 
     // ── MOCA Smart ──
     {
-      id: 'moca-services', section: 'mocasmart', status: 'progress', needsAttention: true,
-      title: 'حزمة خدمات قيد التصميم',
-      update: 'مجموعة خدمات ذاتية قيد التصميم ضمن منصّة MOCA Smart.',
+      id: 'moca-services', section: 'mocasmart', status: 'ready', needsAttention: true,
+      title: 'حزمة خدمات MOCA Smart',
+      update: 'اكتملت تصاميم حزمة الخدمات الذاتية وأصبحت جاهزة للعرض على رئيس القطاع.',
       next: 'عرض الخدمات على رئيس القطاع لتحديد الأولويات واعتماد خارطة التنفيذ.',
       services: [
         { icon: 'briefcase', label: 'دعم إدارة المشاريع' },
